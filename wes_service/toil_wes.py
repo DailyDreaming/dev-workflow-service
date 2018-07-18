@@ -296,7 +296,6 @@ class ToilBackend(WESBackend):
             if os.path.isdir(os.path.join(os.getcwd(), 'workflows', l)):
                 w = ToilWorkflow(l)
                 workflows.append({'workflow_id': w.workflow_id, 'state': w.getstate()[0]})
-
         return {
             'workflows': workflows,
             'next_page_token': ''
