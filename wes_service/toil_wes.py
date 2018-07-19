@@ -372,7 +372,7 @@ class ToilBackend(WESBackend):
     def RunWorkflow(self, body):
         # FIXME Add error responses #16
         workflow_id = uuid.uuid4().hex
-        job = Workflow(workflow_id)
+        job = ToilWorkflow(workflow_id)
         job.run(body, self)
         return {"workflow_id": workflow_id}
 
