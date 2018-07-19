@@ -27,7 +27,7 @@ class Job(threading.Thread):
         loghandle, self.logname = tempfile.mkstemp()
         with self.updatelock:
             self.outdir = tempfile.mkdtemp()
-            self.proc = subprocess.Popen(["cwl-runner", self.path, "-"],
+            self.proc = subprocess.Popen(["toil-cwl-runner", self.path, "-"],
                                          stdin=subprocess.PIPE,
                                          stdout=subprocess.PIPE,
                                          stderr=loghandle,

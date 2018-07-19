@@ -44,8 +44,8 @@ def setup(args=None):
 
 def main(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='Workflow Execution Service')
-    parser.add_argument("--backend", type=str, default="wes_service.cwl_runner",
-                        help="Either: '--backend=wes_service.arvados_wes' or '--backend=wes_service.cwl_runner'")
+    parser.add_argument("--backend", type=str, default="wes_service.toil_wes",
+                        help="Either: '--backend=wes_service.arvados_wes' or '--backend=wes_service.toil_wes'")
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--opt", type=str, action="append",
                         help="Example: '--opt runner=cwltoil --opt extra=--logLevel=CRITICAL' "

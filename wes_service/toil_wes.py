@@ -142,7 +142,7 @@ def catch_toil_exceptions(orig_func):
     return catch_exceptions_wrapper
 
 
-class ToilWorkflow(Workflow):
+class ToilWorkflow(object):
     def __init__(self, workflow_id):
         super(ToilWorkflow, self).__init__()
         self.workflow_id = workflow_id
@@ -172,6 +172,9 @@ class ToilWorkflow(Workflow):
             workflow_url = request_dict.get('workflow_url')
 
         input_json = self.write_json(request_dict)
+
+        if workflow_url.startswith('file://'):
+            workflow_url = workflow_url[7:]
 
         if wftype == 'py':
             return [workflow_url]
@@ -227,7 +230,7 @@ class ToilWorkflow(Workflow):
         logging.info('Beginning Toil Workflow ID: ' + str(self.workflow_id))
 
         with open(self.starttime, 'w') as f:
-            f.write(time.time())
+            f.write(str(time.time()))
 
         with open(self.request_json, 'w') as f:
             json.dump(request_dict, f)
@@ -239,12 +242,60 @@ class ToilWorkflow(Workflow):
         pid = self.call_cmd(cmd)
 
         with open(self.endtime, 'w') as f:
-            f.write(time.time())
+            f.write(str(time.time()))
 
         with open(self.pidfile, 'w') as f:
             f.write(str(pid))
 
         return self.getstatus()
+
+    def getstate(self):
+        """
+        Returns RUNNING, -1
+                COMPLETE, 0
+                or
+                EXECUTOR_ERROR, 255
+        """
+        state = "RUNNING"
+        exit_code = -1
+
+        exitcode_file = os.path.join(self.workdir, "exit_code")
+        pid_file = os.path.join(self.workdir, "pid")
+
+        if os.path.exists(exitcode_file):
+            with open(exitcode_file) as f:
+                exit_code = int(f.read())
+        elif os.path.exists(pid_file):
+            with open(pid_file, "r") as pid:
+                pid = int(pid.read())
+            try:
+                (_pid, exit_status) = os.waitpid(pid, os.WNOHANG)
+                if _pid != 0:
+                    exit_code = exit_status >> 8
+                    with open(exitcode_file, "w") as f:
+                        f.write(str(exit_code))
+                    os.unlink(pid_file)
+            except OSError:
+                os.unlink(pid_file)
+                exit_code = 255
+
+        if exit_code == 0:
+            state = "COMPLETE"
+        elif exit_code != -1:
+            state = "EXECUTOR_ERROR"
+
+        return state, exit_code
+
+    def getstatus(self):
+        state, exit_code = self.getstate()
+
+        return {
+            "workflow_id": self.workflow_id,
+            "state": state
+        }
+
+    def cancel(self):
+        pass
 
     def getlog(self):
         state, exit_code = self.getstate()
@@ -306,7 +357,7 @@ class ToilBackend(WESBackend):
             'key_values': {}
         }
 
-    @catch_toil_exceptions
+    # @catch_toil_exceptions
     def ListWorkflows(self):
         # FIXME #15 results don't page
         workflows = []
@@ -319,28 +370,35 @@ class ToilBackend(WESBackend):
             'next_page_token': ''
         }
 
-    @catch_toil_exceptions
     def RunWorkflow(self, body):
+        # FIXME Add error responses #16
         workflow_id = uuid.uuid4().hex
-        job = ToilWorkflow(workflow_id)
-        p = Process(target=job.run, args=(body, self))
-        p.start()
-        self.processes[workflow_id] = p
-        return {'workflow_id': workflow_id}
+        job = Workflow(workflow_id)
+        job.run(body, self)
+        return {"workflow_id": workflow_id}
 
-    @catch_toil_exceptions
+    # @catch_toil_exceptions
+    # def RunWorkflow(self, body):
+    #     workflow_id = uuid.uuid4().hex
+    #     job = ToilWorkflow(workflow_id)
+    #     p = Process(target=job.run, args=(body, self))
+    #     p.start()
+    #     self.processes[workflow_id] = p
+    #     return {'workflow_id': workflow_id}
+
+    # @catch_toil_exceptions
     def GetWorkflowLog(self, workflow_id):
         job = ToilWorkflow(workflow_id)
         return job.getlog()
 
-    @catch_toil_exceptions
+    # @catch_toil_exceptions
     def CancelJob(self, workflow_id):
         # should this block with `p.is_alive()`?
         if workflow_id in self.processes:
             self.processes[workflow_id].terminate()
         return {'workflow_id': workflow_id}
 
-    @catch_toil_exceptions
+    # @catch_toil_exceptions
     def GetWorkflowStatus(self, workflow_id):
         job = ToilWorkflow(workflow_id)
         return job.getstatus()
