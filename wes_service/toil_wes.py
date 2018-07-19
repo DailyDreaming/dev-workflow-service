@@ -3,7 +3,7 @@ import json
 import uuid
 import subprocess
 import urllib
-from multiprocessing import Process
+# from multiprocessing import Process
 import functools
 import logging
 import sys
@@ -13,12 +13,9 @@ from cwltool.main import load_job_order
 from argparse import Namespace
 
 from wes_service.util import WESBackend
+from wes_service.errors import MissingAuthorization
 
 logging.basicConfig(level=logging.INFO)
-
-
-class MissingAuthorization(Exception):
-    pass
 
 
 class LocalFiles(object):

@@ -13,11 +13,8 @@ import logging
 import shutil
 
 from wes_service.util import visit, WESBackend
+from wes_service.errors import MissingAuthorization
 from werkzeug.utils import secure_filename
-
-
-class MissingAuthorization(Exception):
-    pass
 
 
 def get_api():
