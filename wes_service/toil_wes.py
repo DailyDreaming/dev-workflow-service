@@ -3,7 +3,7 @@ import json
 import uuid
 import subprocess
 import urllib
-from multiprocessing import Process
+# from multiprocessing import Process
 import functools
 import logging
 import sys
@@ -13,12 +13,9 @@ from cwltool.main import load_job_order
 from argparse import Namespace
 
 from wes_service.util import WESBackend
+from wes_service.errors import MissingAuthorization
 
 logging.basicConfig(level=logging.INFO)
-
-
-class MissingAuthorization(Exception):
-    pass
 
 
 class LocalFiles(object):
@@ -356,7 +353,7 @@ class ToilBackend(WESBackend):
             'key_values': {}
         }
 
-    # @catch_toil_exceptions
+    @catch_toil_exceptions
     def ListWorkflows(self):
         # FIXME #15 results don't page
         workflows = []
@@ -369,6 +366,7 @@ class ToilBackend(WESBackend):
             'next_page_token': ''
         }
 
+    @catch_toil_exceptions
     def RunWorkflow(self, body):
         # FIXME Add error responses #16
         workflow_id = uuid.uuid4().hex
@@ -385,19 +383,19 @@ class ToilBackend(WESBackend):
     #     self.processes[workflow_id] = p
     #     return {'workflow_id': workflow_id}
 
-    # @catch_toil_exceptions
+    @catch_toil_exceptions
     def GetWorkflowLog(self, workflow_id):
         job = ToilWorkflow(workflow_id)
         return job.getlog()
 
-    # @catch_toil_exceptions
+    @catch_toil_exceptions
     def CancelJob(self, workflow_id):
         # should this block with `p.is_alive()`?
         if workflow_id in self.processes:
             self.processes[workflow_id].terminate()
         return {'workflow_id': workflow_id}
 
-    # @catch_toil_exceptions
+    @catch_toil_exceptions
     def GetWorkflowStatus(self, workflow_id):
         job = ToilWorkflow(workflow_id)
         return job.getstatus()

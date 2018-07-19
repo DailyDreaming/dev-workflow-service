@@ -32,14 +32,14 @@ class IntegrationTest(unittest.TestCase):
         cwl_dockstore_url = 'https://dockstore.org:8443/api/ga4gh/v2/tools/quay.io%2Fbriandoconnor%2Fdockstore-tool-md5sum/versions/master/plain-CWL/descriptor/%2FDockstore.cwl'
         output_filepath = run_md5sum(cwl_input=cwl_dockstore_url)
         self.assertTrue(check_for_file(output_filepath), 'Output file was not found: ' + str(output_filepath))
-        # shutil.rmtree('workflows')
+        shutil.rmtree('workflows')
 
     def test_local_md5sum(self):
         """Pass a local md5sum cwl to the wes-service server, and check for the correct output."""
         cwl_local_path = os.path.abspath('testdata/md5sum.cwl')
         output_filepath = run_md5sum(cwl_input='file://' + cwl_local_path)
         self.assertTrue(check_for_file(output_filepath), 'Output file was not found: ' + str(output_filepath))
-        # shutil.rmtree('workflows')
+        shutil.rmtree('workflows')
 
 
 def run_md5sum(cwl_input):
@@ -49,8 +49,6 @@ def run_md5sum(cwl_input):
     body = {'workflow_url': cwl_input, 'workflow_params': params, 'workflow_type': 'CWL', 'workflow_type_version': 'v1.0'}
     response = requests.post(endpoint, json=body).json()
     output_dir = os.path.abspath(os.path.join('workflows', response['workflow_id'], 'outdir'))
-    with open('/home/quokka/Desktop/dev-workflow-service/log', 'w') as f:
-        f.write(os.path.join(output_dir, 'md5sum.txt'))
     return os.path.join(output_dir, 'md5sum.txt')
 
 
@@ -75,16 +73,16 @@ def check_for_file(filepath, seconds=20):
     return True
 
 
-# class CwltoolTest(IntegrationTest):
-#     """Test using cwltool."""
-#     def setUp(self):
-#         """
-#         Start a (local) wes-service server to make requests against.
-#         Use cwltool as the wes-service server 'backend'.
-#         """
-#         self.wes_server_process = subprocess.Popen('python {}'.format(os.path.abspath('wes_service/wes_service_main.py')),
-#                                                    shell=True)
-#         time.sleep(5)
+class CwltoolTest(IntegrationTest):
+    """Test using cwltool."""
+    def setUp(self):
+        """
+        Start a (local) wes-service server to make requests against.
+        Use cwltool as the wes-service server 'backend'.
+        """
+        self.wes_server_process = subprocess.Popen('python {}'.format(os.path.abspath('wes_service/wes_service_main.py')),
+                                                   shell=True)
+        time.sleep(5)
 
 
 class ToilTest(IntegrationTest):
