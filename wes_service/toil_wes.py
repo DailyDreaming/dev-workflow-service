@@ -3,7 +3,7 @@ import json
 import uuid
 import subprocess
 import urllib
-# from multiprocessing import Process
+from multiprocessing import Process
 import functools
 import logging
 import sys
@@ -366,22 +366,22 @@ class ToilBackend(WESBackend):
             'next_page_token': ''
         }
 
-    @catch_toil_exceptions
-    def RunWorkflow(self, body):
-        # FIXME Add error responses #16
-        workflow_id = uuid.uuid4().hex
-        job = ToilWorkflow(workflow_id)
-        job.run(body, self)
-        return {"workflow_id": workflow_id}
-
     # @catch_toil_exceptions
     # def RunWorkflow(self, body):
+    #     # FIXME Add error responses #16
     #     workflow_id = uuid.uuid4().hex
     #     job = ToilWorkflow(workflow_id)
-    #     p = Process(target=job.run, args=(body, self))
-    #     p.start()
-    #     self.processes[workflow_id] = p
-    #     return {'workflow_id': workflow_id}
+    #     job.run(body, self)
+    #     return {"workflow_id": workflow_id}
+
+    @catch_toil_exceptions
+    def RunWorkflow(self, body):
+        workflow_id = uuid.uuid4().hex
+        job = ToilWorkflow(workflow_id)
+        p = Process(target=job.run, args=(body, self))
+        p.start()
+        self.processes[workflow_id] = p
+        return {'workflow_id': workflow_id}
 
     @catch_toil_exceptions
     def GetWorkflowLog(self, workflow_id):
