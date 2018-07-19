@@ -13,7 +13,6 @@ from cwltool.main import load_job_order
 from argparse import Namespace
 
 from wes_service.util import WESBackend
-from wes_service.cwl_runner import Workflow
 
 logging.basicConfig(level=logging.INFO)
 
