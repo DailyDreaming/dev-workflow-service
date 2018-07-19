@@ -14,9 +14,12 @@ from argparse import Namespace
 
 from wes_service.util import WESBackend
 from wes_service.cwl_runner import Workflow
-from wes_service.arvados_wes import MissingAuthorization
 
 logging.basicConfig(level=logging.INFO)
+
+
+class MissingAuthorization(Exception):
+    pass
 
 
 class LocalFiles(object):
@@ -343,5 +346,5 @@ class ToilBackend(WESBackend):
         return job.getstatus()
 
 
-def create_backend(opts):
+def create_backend(app, opts):
     return ToilBackend(opts)

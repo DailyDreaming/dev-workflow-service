@@ -92,8 +92,7 @@ class ToilTest(IntegrationTest):
         Start a (local) wes-service server to make requests against.
         Use toil as the wes-service server 'backend'.
         """
-        self.wes_server_process = subprocess.Popen('python {} '
-                                                   '--opt runner=cwltoil --opt extra=--logLevel=CRITICAL'
+        self.wes_server_process = subprocess.Popen('python {} --backend=wes_service.toil_wes --opt="extra=--logLevel=CRITICAL"'
                                                    ''.format(os.path.abspath('wes_service/wes_service_main.py')),
                                                    shell=True)  # , stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         time.sleep(5)
