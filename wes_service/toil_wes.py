@@ -7,6 +7,7 @@ from multiprocessing import Process
 import functools
 import logging
 import sys
+import time
 from six import iteritems
 from cwltool.main import load_job_order
 from argparse import Namespace
@@ -149,6 +150,8 @@ class ToilWorkflow(Workflow):
 
         self.outfile = os.path.join(self.workdir, 'stdout')
         self.errfile = os.path.join(self.workdir, 'stderr')
+        self.starttime = os.path.join(self.workdir, 'starttime')
+        self.endtime = os.path.join(self.workdir, 'endtime')
         self.pidfile = os.path.join(self.workdir, 'pid')
         self.cmdfile = os.path.join(self.workdir, 'cmd')
         self.request_json = os.path.join(self.workdir, 'request.json')
@@ -220,6 +223,9 @@ class ToilWorkflow(Workflow):
 
         logging.info('Beginning Toil Workflow ID: ' + str(self.workflow_id))
 
+        with open(self.starttime, 'w') as f:
+            f.write(time.time())
+
         with open(self.request_json, 'w') as f:
             json.dump(request_dict, f)
 
@@ -228,6 +234,9 @@ class ToilWorkflow(Workflow):
 
         cmd = runner + opts.getoptlist('extra') + input_wf
         pid = self.call_cmd(cmd)
+
+        with open(self.endtime, 'w') as f:
+            f.write(time.time())
 
         with open(self.pidfile, 'w') as f:
             f.write(str(pid))
@@ -244,10 +253,16 @@ class ToilWorkflow(Workflow):
                 stderr = f.read()
             with open(self.cmdfile, 'r') as f:
                 cmd = f.read()
+            with open(self.starttime, 'r') as f:
+                starttime = f.read()
+            with open(self.endtime, 'r') as f:
+                endtime = f.read()
         else:
             request = ''
             stderr = ''
             cmd = ['']
+            starttime = ''
+            endtime = ''
 
         outputobj = {}
         if state == 'COMPLETE':
@@ -260,8 +275,8 @@ class ToilWorkflow(Workflow):
             'state': state,
             'workflow_log': {
                 'cmd': cmd,
-                'start_time': '',
-                'end_time': '',
+                'start_time': starttime,
+                'end_time': endtime,
                 'stdout': '',
                 'stderr': stderr,
                 'exit_code': exit_code
